@@ -16,37 +16,27 @@ jobs:
 
       - name: Check repository files
         run: |
-          echo "Files in repository:"
           ls -la
-          echo ""
-          echo "ZIP files:"
           find . -maxdepth 2 -type f -name "*.zip" -print
 
-      - name: Extract V22 project
+      - name: Extract final project
         run: |
           rm -rf build-src
           mkdir -p build-src
-          unzip -q YUG_SIP_Reminder_V22_GITHUB_BUILD.zip -d build-src
-          echo ""
-          echo "Extracted project:"
-          find build-src -maxdepth 4 -type f -print
+          unzip -q YUG_SIP_Reminder_FINAL_BUILD.zip -d build-src
+          echo "Project extracted successfully"
+          find build-src/YUG_SIP_Reminder_Android_Project_V22 -maxdepth 3 -type f -print
 
-      - name: Check V22 project
+      - name: Verify final project
         run: |
           PROJECT="build-src/YUG_SIP_Reminder_Android_Project_V22"
-          echo "Checking project:"
-          ls -la "$PROJECT"
-          echo ""
-          echo "Checking app folder:"
-          ls -la "$PROJECT/app"
-          echo ""
-          echo "Checking MainActivity:"
-          sed -n '1,220p' "$PROJECT/app/src/main/java/com/yugfinancial/sipreminder/MainActivity.java"
-
-      - name: Enable AndroidX
-        run: |
-          echo "android.useAndroidX=true" > build-src/YUG_SIP_Reminder_Android_Project_V22/gradle.properties
-          echo "android.enableJetifier=true" >> build-src/YUG_SIP_Reminder_Android_Project_V22/gradle.properties
+          test -f "$PROJECT/settings.gradle"
+          test -f "$PROJECT/build.gradle"
+          test -f "$PROJECT/app/build.gradle"
+          test -f "$PROJECT/app/src/main/AndroidManifest.xml"
+          test -f "$PROJECT/app/src/main/java/com/yugfinancial/sipreminder/MainActivity.java"
+          test -f "$PROJECT/app/src/main/assets/index.html"
+          echo "Final project files verified"
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -67,28 +57,21 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Build V22 Debug APK
+      - name: Build final Debug APK
         working-directory: build-src/YUG_SIP_Reminder_Android_Project_V22
         run: |
-          echo "Starting Gradle build..."
           gradle --no-daemon clean assembleDebug
-          echo ""
-          echo "APK files created:"
-          find app/build/outputs -type f -name "*.apk" -print
 
-      - name: Check APK
+      - name: Verify APK
         run: |
           APK="build-src/YUG_SIP_Reminder_Android_Project_V22/app/build/outputs/apk/debug/app-debug.apk"
-          if [ ! -f "$APK" ]; then
-            echo "ERROR: APK was not created."
-            exit 1
-          fi
-          echo "APK successfully created:"
+          test -f "$APK"
+          echo "APK created successfully"
           ls -lh "$APK"
 
-      - name: Upload V22 APK
+      - name: Upload final APK
         uses: actions/upload-artifact@v4
         with:
-          name: YUG-SIP-Reminder-V22-debug-apk
+          name: YUG-SIP-Reminder-FINAL-debug-apk
           path: build-src/YUG_SIP_Reminder_Android_Project_V22/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
