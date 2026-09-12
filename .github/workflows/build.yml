@@ -11,8 +11,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Check repository files
+        run: |
+          echo "Files in repository:"
+          ls -la
+          echo ""
+          echo "ZIP files:"
+          find . -maxdepth 2 -type f -name "*.zip" -print
 
       - name: Extract V22 project
         run: |
@@ -21,8 +29,24 @@ jobs:
 
           unzip -q YUG_SIP_Reminder_V22_GITHUB_BUILD.zip -d build-src
 
-          echo "Extracted files:"
-          find build-src -maxdepth 3 -type f | head -100
+          echo ""
+          echo "Extracted project:"
+          find build-src -maxdepth 4 -type f -print
+
+      - name: Check V22 project
+        run: |
+          PROJECT="build-src/YUG_SIP_Reminder_Android_Project_V22"
+
+          echo "Checking project:"
+          ls -la "$PROJECT"
+
+          echo ""
+          echo "Checking app folder:"
+          ls -la "$PROJECT/app"
+
+          echo ""
+          echo "Checking MainActivity:"
+          sed -n '1,220p' "$PROJECT/app/src/main/java/com/yugfinancial/sipreminder/MainActivity.java"
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -35,7 +59,8 @@ jobs:
 
       - name: Install Android SDK packages
         run: |
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -45,7 +70,23 @@ jobs:
       - name: Build V22 Debug APK
         working-directory: build-src/YUG_SIP_Reminder_Android_Project_V22
         run: |
+          echo "Starting Gradle build..."
           gradle --no-daemon clean assembleDebug
+          echo ""
+          echo "APK files created:"
+          find app/build/outputs -type f -name "*.apk" -print
+
+      - name: Check APK
+        run: |
+          APK="build-src/YUG_SIP_Reminder_Android_Project_V22/app/build/outputs/apk/debug/app-debug.apk"
+
+          if [ ! -f "$APK" ]; then
+            echo "ERROR: APK was not created."
+            exit 1
+          fi
+
+          echo "APK successfully created:"
+          ls -lh "$APK"
 
       - name: Upload V22 APK
         uses: actions/upload-artifact@v4
