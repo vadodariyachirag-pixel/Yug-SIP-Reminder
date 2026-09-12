@@ -26,9 +26,7 @@ jobs:
         run: |
           rm -rf build-src
           mkdir -p build-src
-
           unzip -q YUG_SIP_Reminder_V22_GITHUB_BUILD.zip -d build-src
-
           echo ""
           echo "Extracted project:"
           find build-src -maxdepth 4 -type f -print
@@ -36,17 +34,19 @@ jobs:
       - name: Check V22 project
         run: |
           PROJECT="build-src/YUG_SIP_Reminder_Android_Project_V22"
-
           echo "Checking project:"
           ls -la "$PROJECT"
-
           echo ""
           echo "Checking app folder:"
           ls -la "$PROJECT/app"
-
           echo ""
           echo "Checking MainActivity:"
           sed -n '1,220p' "$PROJECT/app/src/main/java/com/yugfinancial/sipreminder/MainActivity.java"
+
+      - name: Enable AndroidX
+        run: |
+          echo "android.useAndroidX=true" > build-src/YUG_SIP_Reminder_Android_Project_V22/gradle.properties
+          echo "android.enableJetifier=true" >> build-src/YUG_SIP_Reminder_Android_Project_V22/gradle.properties
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -79,12 +79,10 @@ jobs:
       - name: Check APK
         run: |
           APK="build-src/YUG_SIP_Reminder_Android_Project_V22/app/build/outputs/apk/debug/app-debug.apk"
-
           if [ ! -f "$APK" ]; then
             echo "ERROR: APK was not created."
             exit 1
           fi
-
           echo "APK successfully created:"
           ls -lh "$APK"
 
